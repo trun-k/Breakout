@@ -22,7 +22,7 @@ let starterSpeed = 2;
 // score and lives
 let score = 0;
 let cleared = 0;
-let lives = 10;
+let lives = 3;
 
 
 // speed of ball and paddle
