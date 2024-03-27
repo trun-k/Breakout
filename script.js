@@ -21,7 +21,8 @@ let starterSpeed = 2;
 
 // score and lives
 let score = 0;
-let lives = 3;
+let cleared = 0;
+let lives = 10;
 
 
 // speed of ball and paddle
@@ -50,6 +51,7 @@ let brickOffSetTop = 30;
 let brickOffSetLeft = 30;
 let brickRows = 8;
 let brickColumns = 8;
+let target = brickRows*brickColumns;
 for(let i=0;i<brickRows;i++){
     bricks[i] = [];
     for(let j=0;j<brickColumns;j++){
@@ -57,6 +59,10 @@ for(let i=0;i<brickRows;i++){
     }
 }
 
+// audios
+let paddleHitAudio;
+let gameOver;
+let levelUp;
 
 // controls
 let leftPressed = false;
@@ -110,7 +116,6 @@ function drawPaddle(){
 
 // draw bricks
 function drawBricks(){
-    brickSetUp();
     for(let i=0; i<brickRows; i++){
         for(let j=0;j<brickColumns; j++){
             if(bricks[i][j].visible===true){
@@ -138,10 +143,13 @@ function collision(){
                 if(x >= brick.x -radius && x <= brick.x + brickWidth + radius && y >= brick.y - radius && y <= brick.y + brickHeight + radius){
                     dy = -dy;
                     brick.visible = false;
-                    score++;
-                    if(score===brickRows*brickColumns){
-                        alert("You win!");
-                        document.location.reload();
+                    score += level;
+                    cleared++;
+                    if(cleared===target){
+                        nextLevel();
+                        x = canvas.width/2;
+                        y = canvas.height - (radius + paddleHeight);
+                        paddleX = (canvas.width - paddleWidth)/2;
                     }
                 }
             }
@@ -154,7 +162,7 @@ function collision(){
 function drawScore(){
     context.font = "16px Arial";
     context.fillStyle = "#0095DD";
-    context.fillText(`Score: ${score*level}`, 8, 20);
+    context.fillText(`Score: ${score}     Level: ${level}`, 8, 20);
 }
 
 
@@ -163,6 +171,131 @@ function drawLives(){
     context.font = "16px Arial";
     context.fillStyle = "#0095DD";
     context.fillText(`Lives: ${lives}`, canvas.width - 65, 20);
+}
+
+
+// handles when level changes
+function nextLevel(){
+    level++;
+    levelUp.play();
+    cleared = 0;
+    grids = ["standard", "standard2", "checkerboard", "checkerboard2", "window", "rows", "full"];
+    brickSetUp(grids[Math.floor(Math.random()* grids.length)]);
+}
+
+
+// handles various brick layout
+function brickSetUp(grid){
+    target = 0;
+    brickRows = 8;
+    console.log(grid);
+    switch (grid) {
+        case "standard":
+            for(let i=0;i<brickRows;i++){
+                for(let j=0;j<brickColumns;j++){
+                    if(i<5){
+                        bricks[i][j].visible = true;
+                        target++;
+                    }else{
+                        bricks[i][j].visible = false;
+                    }
+                }
+            }
+            break;
+        case "standard2":
+            for(let i=0;i<brickRows;i++){
+                for(let j=0;j<brickColumns;j++){
+                    if(i<6){
+                        bricks[i][j].visible = true;
+                        target++;
+                    }else{
+                        bricks[i][j].visible = false;
+                    }
+                }
+            }
+            break;
+        case "checkerboard":
+            flag = true;
+            for(let i=0;i<brickRows;i++){
+                for(let j=0;j<brickColumns;j++){
+                    bricks[i][j].visible = flag;
+                    if(flag){
+                        target++;
+                    }
+                    flag = !flag;
+                }
+            }
+            break;
+        case "checkerboard2":
+            flag = false;
+            for(let i=0;i<brickRows;i++){
+                for(let j=0;j<brickColumns;j++){
+                    bricks[i][j].visible = flag;
+                    if(flag){
+                        target++;
+                    }
+                    flag = !flag;
+                }
+            }
+            break;
+        case "rows":
+            for(let i=0;i<brickRows;i++){
+                for(let j=0;j<brickColumns;j++){
+                    if(i%2==0){
+                        bricks[i][j].visible = true;
+                        target++;
+                    }else{
+                        bricks[i][j].visible = false;
+                    }
+                }
+            }
+            break;
+        case "window":
+            for(let i=0;i<brickRows;i++){
+                for(let j=0;j<brickColumns;j++){
+                    if(i%2!=0 && j%2!=0){
+                        bricks[i][j].visible = false;
+                    }else{
+                        bricks[i][j].visible = true;
+                        target++;
+                    }
+                }
+            }
+            break;
+        case "full":
+            for(let i=0;i<brickRows;i++){
+                for(let j=0;j<brickColumns;j++){
+                    bricks[i][j].visible = true;
+                    target++;
+                }
+            }
+            break;
+        default:
+            for(let i=0;i<5;i++){
+                for(let j=0;j<brickColumns;j++){
+                    bricks[i][j].visible = true;
+                    target++;
+                }
+            }
+            break;
+    }
+}
+
+
+// create an audio element and use it for sound
+function sound(src){
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+        this.sound.play();
+    }
+    this.stop = function(){
+        this.sound.pause();
+    }
 }
 
 
@@ -181,6 +314,7 @@ function draw(){
         dy = -dy;
     }else if(y + dy + radius > canvas.height-paddleHeight){
         if(paddleX - radius < x && paddleX + paddleWidth + radius > x){
+            paddleHitAudio.play();
             dy = -dy;
             dy -= speedBump;
             if(dx < 0){
@@ -191,6 +325,7 @@ function draw(){
         }else{
             lives--;
             if(lives===0){
+                gameOver.play();
                 alert("Game over, you lost!");
                 document.location.reload();
             }else{
@@ -212,4 +347,12 @@ function draw(){
     requestAnimationFrame(draw);
 }
 
-draw();
+function setup(){
+    brickSetUp("window");
+    paddleHitAudio = new sound("audio/paddle_hit.mp3");
+    gameOver = new sound("audio/game_over.mp3");
+    levelUp = new sound("audio/level_up.mp3");
+    draw();
+}
+
+setup();
