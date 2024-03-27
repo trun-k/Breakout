@@ -15,7 +15,7 @@ context.fillStyle = "#FF0000";              -> filling the color
 // making level
 let level = 1;
 
-// Values which can be changed upon level -> speed, bricks and score
+// speeds
 let speedBump = 0.2;
 let starterSpeed = 2;
 
@@ -298,7 +298,7 @@ function sound(src){
     }
 }
 
-
+// main function drawing on the canvas
 function draw(){
     context.clearRect(0, 0, canvas.width, canvas.height);   // clears previous canvas, so there is no trail of ball
     drawBall();
@@ -347,8 +347,9 @@ function draw(){
     requestAnimationFrame(draw);
 }
 
+
 function setup(){
-    brickSetUp("window");
+    brickSetUp("standard");
     paddleHitAudio = new sound("audio/paddle_hit.mp3");
     gameOver = new sound("audio/game_over.mp3");
     levelUp = new sound("audio/level_up.mp3");
